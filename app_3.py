@@ -124,21 +124,21 @@ def get_items(skip: int = 0, limit: int = 10):
 
 
 @app.post("/predict")
-async def predict(file: UploadFile = File(...), db:Session = Depends(get_db)):
+async def predict_bancknote(file: UploadFile = File(...), db: Session = Depends(get_db)):
     classifier = load("linear_regression.joblib")
-
-    features_df = pd.read_csv("selected_features.csv")
-    features = features_df['0'].tolist()
-
+    
+    features_df = pd.read_csv('selected_features.csv')
+    features = features_df['0'].to_list()
+    
     contents = await file.read()
     df = pd.read_csv(StringIO(contents.decode('utf-8')))
     df = df[features]
-
+    
     predictions = classifier.predict(df)
 
     lima_tz = pytz.timezone('America/Lima')
     now = datetime.now(lima_tz)
-
+ 
     for i, prediction in enumerate(predictions):
         prediction_entry = Prediction(
             file_name=file.filename,
@@ -146,7 +146,10 @@ async def predict(file: UploadFile = File(...), db:Session = Depends(get_db)):
             created_at=now   
         )
         db.add(prediction_entry)
-
+    
+    db.commit()
+    
     return {
         "predictions": predictions.tolist()
     }
+
