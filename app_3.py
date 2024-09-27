@@ -9,8 +9,8 @@ from io import StringIO
 import pandas as pd
 from joblib import load
 
-from models import Prediction
-from datatime import datetime
+from models import Prediction, Base
+from datetime import datetime
 import pytz
 
 # from pyngrok import ngrok
@@ -139,16 +139,14 @@ async def predict(file: UploadFile = File(...), db:Session = Depends(get_db)):
     lima_tz = pytz.timezone('America/Lima')
     now = datetime.now(lima_tz)
 
-    for 1, prediction in enumerate(predictions):
+    for i, prediction in enumerate(predictions):
         prediction_entry = Prediction(
-            file_name=file.name,
+            file_name=file.filename,
             prediction=prediction,
-            create_at=now
+            created_at=now   
         )
         db.add(prediction_entry)
 
-    db.commit()
-
-    return{
+    return {
         "predictions": predictions.tolist()
     }
